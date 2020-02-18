@@ -1,0 +1,30 @@
+COMP 321 Project 3: Linking
+<Insert your name(s) and NetID(s).>
+
+---(Do not write lines of text that exceed the width of this line.)------------
+
+PROBLEM 7.6
+
+<Insert the answer to problem 7.6 here.>
+
+PROBLEM 7.9
+
+<Insert the answer to problem 7.9 here.>
+
+PROBLEM 7.12
+
+<Insert the answer to problem 7.12 here.>
+
+READJCF
+
+DESIGN DESCRIPTION
+
+<Insert a description of your solution in English.  Describe any design
+decisions that you made.  Do not submit pseudo-code.> 
+
+TESTING STRATEGY
+
+<Insert a detailed description of your testing strategy: at a minimum
+you should explain how you tested your code, how you selected your inputs,
+what those inputs were, and why you believe those inputs were sufficient
+to test your code.>
