@@ -4,7 +4,8 @@
  * This program reads a single Java Class File and prints out its
  * dependencies and exports, as requested by command-line flags.
  * 
- * <Put your name(s) and NetID(s) here>
+ * asl11 Alex Li 
+ * chl4 Chris Lee
  */
 
 #include <netinet/in.h>
@@ -296,12 +297,25 @@ process_jcf_header(struct jcf_state *jcf)
 {
 
 	assert(jcf != NULL);
+	uint32_t checkMagic; 
 
 	// Read the header.
+	if (fread(&checkMagic, sizeof(checkMagic), 1, jcf->f) != 1)
+		return (-1);
+	checkMagic = ntohl(checkMagic);
+
+	// Moving 4 bytes down the ClassFile
+	uint16_t trashChris; 
+	if (fread(&trashChris, sizeof(trashChris), 1, jcf->f) != 1)
+		return (-1);
+	if (fread(&trashChris, sizeof(trashChris), 1, jcf->f) != 1)
+		return (-1);
 
 	// Verify the magic number.
+	if checkMagic == JCF_MAGIC
+		return (0);
 
-	return (0);
+	return(-1);
 }
 
 /*
@@ -325,17 +339,21 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 	assert(jcf != NULL);
 	assert(jcf->constant_pool.pool == NULL);
 
-	// Prevent "uninitialized variable" warnings.  REMOVE THESE STATEMENTS!
-	constant_pool_count = 0;
-	tag = 0;
-
 	// Read the constant pool count.
+	if (fread(&constant_pool_count, sizeof(constant_pool_count), 1, jcf->f) != 1)
+		return (-1);
 
 	// Allocate the constant pool.
+	jcf->constant_pool.pool = malloc( constant_pool_count * 
+		sizeof(&constant_pool_count));
+	jcf->constant_pool.count = constant_pool_count;
 
 	// Read the constant pool.
 	for (i = 1; i < constant_pool_count; i++) {
 		// Read the constant pool info tag.
+		if (fread(&tag, sizeof(tag), 1, jcf->f) != 1)
+			return (-1);
+
 
 		// Process the rest of the constant info.
 		switch (tag) {
