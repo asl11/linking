@@ -200,6 +200,13 @@ struct jcf_state {
 	struct jcf_constant_pool constant_pool;
 };
 
+// Our own struct ! for 2u4
+struct jcf_cp_info_2u4 {
+	uint8_t tag;
+	uint32_t high_bytes;
+	uint32_t low_bytes;
+} __attribute__((packed));
+
 // Declare the local function prototypes.
 static void	readjcf_error(void);
 static int	print_jcf_constant(struct jcf_state *jcf,
@@ -312,7 +319,7 @@ process_jcf_header(struct jcf_state *jcf)
 		return (-1);
 
 	// Verify the magic number.
-	if checkMagic == JCF_MAGIC
+	if (checkMagic == JCF_MAGIC)
 		return (0);
 
 	return(-1);
@@ -354,38 +361,89 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 		if (fread(&tag, sizeof(tag), 1, jcf->f) != 1)
 			return (-1);
 
-
 		// Process the rest of the constant info.
 		switch (tag) {
 		case JCF_CONSTANT_String:
 		case JCF_CONSTANT_Class:
 		case JCF_CONSTANT_MethodType:
 			// Read a constant that contains one u2.
+			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u2));
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info_1u2 *) jcf->constant_pool.pool[i];
+			if (fread(jcf->constant_pool.pool[i]->u2, 
+				sizeof(struct jcf_cp_info_1u2->u2), 1, jcf->f) != 1)
+				return (-1);
+			jcf->constant_pool.pool[i]->u2 = ntohs(jcf->constant_pool.pool[i]->u2);
+			jcf->constant_pool.pool[i]->tag = tag;
 			break;
+
 		case JCF_CONSTANT_Fieldref:
 		case JCF_CONSTANT_Methodref:
 		case JCF_CONSTANT_InterfaceMethodref:
 		case JCF_CONSTANT_NameAndType:
 		case JCF_CONSTANT_InvokeDynamic:
 			// Read a constant that contains two u2's.
+			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_2u2));
+			if (fread(jcf->constant_pool.pool[i]->body, 
+				sizeof(struct jcf_cp_info_2u2->body), 1, jcf->f) != 1)
+				return (-1);
+			jcf->constant_pool.pool[i]->body->u2_1 = ntohs(jcf->constant_pool.pool[i]->u2_1);
+			jcf->constant_pool.pool[i]->body->u2_2 = ntohs(jcf->constant_pool.pool[i]->u2_2);
+			jcf->constant_pool.pool[i]->tag = tag;
 			break;
+
 		case JCF_CONSTANT_Integer:
 		case JCF_CONSTANT_Float:
 			// Read a constant that contains one u4.
+			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u4));
+			if (fread(jcf->constant_pool.pool[i]->u4, 
+				sizeof(struct jcf_cp_info_1u4->u4), 1, jcf->f) != 1)
+				return (-1);
+			jcf->constant_pool.pool[i]->u4 = ntohl(jcf->constant_pool.pool[i]->u4);
+			jcf->constant_pool.pool[i]->tag = tag;
 			break;
+
 		case JCF_CONSTANT_Long:
 		case JCF_CONSTANT_Double:
 			/* 
 			 * Read a constant that contains two u4's and
 			 * occupies two indices in the constant pool. 
 			 */
+			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_2u4));
+			if (fread(jcf->constant_pool.pool[i]->high_bytes, sizeof(uint32_t), 1, jcf->f) != 1)
+				return(-1);
+			if (fread(jcf->constant_pool.pool[i]->low_bytes, sizeof(uint32_t), 1, jcf->f) != 1)
+				return(-1);
+			jcf->constant_pool.pool[i]->tag = tag;
+			jcf->constant_pool.pool[i]->high_bytes = ntohl(jcf->constant_pool.pool[i]->high_bytes);
+			jcf->constant_pool.pool[i]->low_bytes = ntohl(jcf->constant_pool.pool[i]->low_bytes);
+			i++;
 			break;
+
 		case JCF_CONSTANT_Utf8:
 			// Read a UTF8 constant.
+			uint16_t length;
+			if (fread(&length, sizeof(uint16_t), 1, jcf->f) != 1)
+				return (-1);
+			length = ntohs(length);
+			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_utf8_info) + length);
+			uint8_t[length] array; 
+			if (fread(array, sizeof(uint8_t) * length, 1, jcf->f) != 1)
+				return(-1);
+			jcf->constant_pool.pool[i]->tag = tag;
+			jcf->constant_pool.pool[i]->length = length;
+			jcf->constant_pool.pool[i]->bytes = array;
 			break;
+
 		case JCF_CONSTANT_MethodHandle:
 			// Read a constant that contains one u1 and one u2.
+			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u1_1u2));
+			if (fread(jcf->constant_pool.pool[i]->body, 
+				sizeof(struct jcf_cp_info_1u1_1u2->body), 1, jcf->f) != 1)
+				return (-1);
+			jcf->constant_pool.pool[i]->body->u2 = ntohs(jcf->constant_pool.pool[i]->u2);
+			jcf->constant_pool.pool[i]->tag = tag;
 			break;
+
 		default:
 			return (-1);
 		}
