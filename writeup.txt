@@ -1,11 +1,41 @@
 COMP 321 Project 3: Linking
-<Insert your name(s) and NetID(s).>
+Alex Li asl11
 
 ---(Do not write lines of text that exceed the width of this line.)------------
 
 PROBLEM 7.6
 
-<Insert the answer to problem 7.6 here.>
+Buf: Yes, in symtab.
+	 Symbol Type - Extern
+	 Module - m.o
+	 Section - .data
+
+Bufp0: Yes, in symtab
+	   Symbol Type - global
+	   Module - swap.o 
+	   Section - .data
+
+Bufp1: Yes, in symtab
+	   Symbol Type - local
+	   Module - swap.o
+	   Section - .bss
+
+swap: Yes, in symtab
+	  Symbol Type - global
+	  Module - swap.o
+	  Section - .text
+
+temp: No, not in symtab
+
+incr: Yes, in symtab
+	  Symbol Type - local
+	  Module - swap.o
+	  Section - .text
+
+count: Yes, in symtab 
+	   Symbol Type - local
+	   Module - swap.o
+	   Section - .bss
 
 PROBLEM 7.9
 
