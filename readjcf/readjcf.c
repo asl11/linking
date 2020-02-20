@@ -249,21 +249,18 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
     uint8_t expected_tag)
 {
 	struct jcf_cp_info *info;
+	struct jcf_cp_class_info *info2;
+	struct jcf_cp_ref_info *info3;
+	struct jcf_cp_nameandtype_info *info4;
+	struct jcf_cp_utf8_info *info5;
 
 	assert(jcf != NULL);
-
-	// Prevent an "uninitialized variable" warning.  REMOVE THIS STATEMENT!
-	info = NULL;
-
-	// Prevent "unused parameter" warnings.  REMOVE THESE STATEMENTS!
-	(void)index;
-	(void)expected_tag;
 
 	// Verify the index.
 	if (index <= jcf->constant_pool.count)
 		return -1;
 
-	info = jcf->constant_pool.pool[i];
+	info = jcf->constant_pool.pool[index];
 
 	// Verify the tag.
 	if (info->tag != expected_tag)
@@ -273,8 +270,8 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
 	switch (info->tag) {
 	case JCF_CONSTANT_Class:
 		// Print the class.
-		info = (jcf_cp_class_info*) info;
-		printf("%u \n", info->name_index); 
+		info2 = (struct jcf_cp_class_info*) info;
+		printf("%u \n", info2->name_index); 
 		break;
 	case JCF_CONSTANT_Fieldref:
 	case JCF_CONSTANT_Methodref:
@@ -283,21 +280,21 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
 		 * Print the reference, with the Class and NameAndType
 		 * separated by a '.'.
 		 */
-		info = (jcf_cp_ref_info*) info;
-		printf("%u.%u \n", info->class_index, info->name_and_type_index);
+		info3 = (struct jcf_cp_ref_info*) info;
+		printf("%u.%u \n", info3->class_index, info3->name_and_type_index);
 		break;
 	case JCF_CONSTANT_NameAndType:
 		// Print the name and type.
-		info = (jcf_cp_nameandtype_info*) info;
-		printf("%u, %u \n", info->name_index, info->descriptor_index);
+		info4 = (struct jcf_cp_nameandtype_info*) info;
+		printf("%u, %u \n", info4->name_index, info4->descriptor_index);
 		break;
 	case JCF_CONSTANT_Utf8:
 		// Print the UTF8.
-		info = (jcf_cp_utf8_info*) info;
-		for (int i = 0; i < info->length; i++) {
-			printf("%u\0 ", info->bytes[i]);
+		info5 = (struct jcf_cp_utf8_info*) info;
+		for (int i = 0; i < info5->length; i++) {
+			printf("%u", info5->bytes[i]);
 		}
-		prinft("\n");
+		printf("\n");
 		break;
 	default:
 		// Ignore all other constants.
@@ -320,6 +317,7 @@ static int
 process_jcf_header(struct jcf_state *jcf)
 {
 
+	struct jcf_header* header = malloc(sizeof(struct jcf_header));
 	assert(jcf != NULL);
 	uint32_t checkMagic; 
 
@@ -329,11 +327,16 @@ process_jcf_header(struct jcf_state *jcf)
 	checkMagic = ntohl(checkMagic);
 
 	// Moving 4 bytes down the ClassFile
-	uint16_t trashChris; 
-	if (fread(&trashChris, sizeof(trashChris), 1, jcf->f) != 1)
+	uint16_t majorminor; 
+	if (fread(&majorminor, sizeof(majorminor), 1, jcf->f) != 1)
 		return (-1);
-	if (fread(&trashChris, sizeof(trashChris), 1, jcf->f) != 1)
+	majorminor = ntohs(majorminor);
+	header->minor_version = majorminor;
+
+	if (fread(&majorminor, sizeof(majorminor), 1, jcf->f) != 1)
 		return (-1);
+	majorminor = ntohs(majorminor);
+	header->major_version = majorminor;
 
 	// Verify the magic number.
 	if (checkMagic == JCF_MAGIC)
@@ -449,6 +452,9 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 				return(-1);
 			temp_utf8->tag = tag;
 			temp_utf8->length = length;
+
+			//Null terminating the strings 
+
 			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_utf8;
 			break;
 
@@ -467,12 +473,9 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 		}
 	}
 
-	/* 
-	 * Print the dependencies if requested.  This must be done after
-	 * reading the entire pool because there are no guarantees about
-	 * constants not containing references to other constants after
-	 * them in the pool. 
-	 */
+	for (int i = 0; i < constant_pool_count; i++) {
+		tag = jcf->constant_pool.pool[i]->tag;
+	}
 
 	return (0);
 }
@@ -490,7 +493,61 @@ destroy_jcf_constant_pool(struct jcf_constant_pool *pool)
 
 	assert(pool != NULL);
 	assert(pool->pool != NULL);
+	uint8_t tag;
+
+	
+	// Read the constant pool.
+	for (int i = 1; i < pool->count; i++) {
+		// Read the constant pool info tag.
+		tag = pool->pool[i]->tag;
+
+		// Process the rest of the constant info.
+		switch (tag) {
+		case JCF_CONSTANT_String:
+		case JCF_CONSTANT_Class:
+		case JCF_CONSTANT_MethodType:;
+			// Read a constant that contains one u2.
+			free(pool->pool[i]);
+			break;
+		case JCF_CONSTANT_Fieldref:
+		case JCF_CONSTANT_Methodref:
+		case JCF_CONSTANT_InterfaceMethodref:
+		case JCF_CONSTANT_NameAndType:
+		case JCF_CONSTANT_InvokeDynamic:;
+			// Read a constant that contains two u2's.
+			free(pool->pool[i]);
+			break;
+
+		case JCF_CONSTANT_Integer:
+		case JCF_CONSTANT_Float:;
+			// Read a constant that contains one u4.
+			free(pool->pool[i]);
+			break;
+
+		case JCF_CONSTANT_Long:
+		case JCF_CONSTANT_Double:;
+			/* 
+			 * Read a constant that contains two u4's and
+			 * occupies two indices in the constant pool. 
+			 */
+			free(pool->pool[i]);
+			i++;
+			break;
+
+		case JCF_CONSTANT_Utf8:;
+			// Read a UTF8 constant.
+			free(pool->pool[i]);
+			break;
+
+		case JCF_CONSTANT_MethodHandle:;
+			// Read a constant that contains one u1 and one u2.
+			free(pool->pool[i]);
+			break;
+		}
+		
+	}
 	free(pool);
+	
 }
 
 /*
@@ -509,7 +566,27 @@ process_jcf_body(struct jcf_state *jcf)
 
 	assert(jcf != NULL);
 
-	// Read the body.
+	struct jcf_body* body = malloc(sizeof(struct jcf_body));
+	uint16_t inputs; 
+
+	// Read the Body
+	// Read access_flags
+	if (fread(&inputs, sizeof(inputs), 1, jcf->f) != 1)
+		return (-1);
+	inputs = ntohs(inputs);
+	body->access_flags = inputs;
+
+	// Read this_class
+	if (fread(&inputs, sizeof(inputs), 1, jcf->f) != 1)
+		return (-1);
+	inputs = ntohs(inputs);
+	body->this_class = inputs;
+
+	// Read super_class
+	if (fread(&inputs, sizeof(inputs), 1, jcf->f) != 1)
+		return (-1);
+	inputs = ntohs(inputs);
+	body ->super_class = inputs;
 
 	return (0);
 }
