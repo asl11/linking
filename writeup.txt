@@ -48,14 +48,21 @@ initialized to any other value.
 
 PROBLEM 7.12
 
+To do this problem we followed the steps outlined in the procedure Figure 7.10.
+For a PC-relative reference, since the r.type is R_X86_64_PC32, we go to the 
+if statement on line 6, and implement the equation:
+(ADDR(r.symbol) + r.addend - refaddr); 
+
+where r.addend = -4, refaddr = ADDR(s) + r.offset, and r.offset = 0xa
+ADDR(s) = ADDR(.test) and ADDR(r.symbol) = ADDR(swap)
 A. 
-r.symbol + (-4) - .text - offset = 
+r.symbol + (-4) - ADDR(s) - offset = 
 	0x4004f8 - 4 - 0x4004e0 - 0xa
 	= 4004f4 - 4004e0 - a 
 	= 0xa or 10 in decimal
 
 B.
-r.symbol + addend - .text - offset = 
+r.symbol + addend - ADDR(s) - offset = 
 	0x400500 - 4 - 0x4004d0 - a
 	= 0x4004FC - 4004da
 	= 0x22 or 34 in decimal
