@@ -530,9 +530,25 @@ process_jcf_interfaces(struct jcf_state *jcf)
 
 	assert(jcf != NULL);
 
-	// Read the interfaces count.
-
 	// Read the interfaces.
+	int i;
+	uint16_t info;
+	uint16_t count;
+	count = 0;
+
+	assert(jcf != NULL);
+
+	// Read the count.
+	if (fread(&count, sizeof(count), 1, jcf->f) != 1)
+		return (-1);
+	count = ntohs(count);
+
+	// Read the methods.
+	for (i = 0; i < count; i++) {
+		// Read the info.
+		if (fread(&info, sizeof(info), 1, jcf->f) != 1)
+			return (-1);
+	}
 
 	return (0);
 }
@@ -652,14 +668,35 @@ process_jcf_attributes(struct jcf_state *jcf)
 	attributes_count = 0;
 
 	// Read the attributes count.
+	assert(jcf != NULL);
+
+
+	// Read the count.
+	if (fread(&attributes_count, sizeof(attributes_count), 1, jcf->f) != 1)
+		return (-1);
+	attributes_count = ntohs(attributes_count);
+
+	uint16_t name;
+	uint32_t length;
+
+	// Get rid of compiler errors
+	name = 0;
+	length = 0;
 
 	// Read the attributes.
 	for (i = 0; i < attributes_count; i++) {
 		// Read the attribute name index.
-
+		if (fread(&name, sizeof(name), 1, jcf->f) != 1)
+			return (-1);
 		// Read the attribute length.
+		if (fread(&length, sizeof(length), 1, jcf->f) != 1)
+			return (-1);
+		length = ntohl(length);
 
 		// Read the attribute data.
+		uint8_t data[length];
+		if (fread(&data, sizeof(uint8_t) * length, 1, jcf->f) != 1)
+			return (-1);
 	}
 
 	return (0);
