@@ -489,6 +489,7 @@ destroy_jcf_constant_pool(struct jcf_constant_pool *pool)
 
 	assert(pool != NULL);
 	assert(pool->pool != NULL);
+	free(pool);
 }
 
 /*
