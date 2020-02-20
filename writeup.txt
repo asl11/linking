@@ -39,11 +39,26 @@ count: Yes, in symtab
 
 PROBLEM 7.9
 
-<Insert the answer to problem 7.9 here.>
+Since C doesn't initialize variables to any set value, the uninitialized 
+variable main is set to whatever was at the point in memory that C
+allocated for the variable to be. The stack frame doesn't contain 
+newly allocated memory, so the contents of the memory at runtime 
+will appear as the initial values of main, because main was never
+initialized to any other value. 
 
 PROBLEM 7.12
 
-<Insert the answer to problem 7.12 here.>
+A. 
+r.symbol + (-4) - .text - offset = 
+	0x4004f8 - 4 - 0x4004e0 - 0xa
+	= 4004f4 - 4004e0 - a 
+	= 0xa or 10 in decimal
+
+B.
+r.symbol + addend - .text - offset = 
+	0x400500 - 4 - 0x4004d0 - a
+	= 0x4004FC - 4004da
+	= 0x22 or 34 in decimal
 
 READJCF
 
