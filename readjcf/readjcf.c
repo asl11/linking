@@ -473,10 +473,15 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 		}
 	}
 
-	for (int i = 0; i < constant_pool_count; i++) {
-		tag = jcf->constant_pool.pool[i]->tag;
+	if (jcf->depends_flag) {
+		for (int i = 0; i < constant_pool_count; i++) {
+			tag = jcf->constant_pool.pool[i]->tag;
+			if (tag == JCF_CONSTANT_Methodref || tag == JCF_CONSTANT_Fieldref 
+				|| tag == JCF_CONSTANT_InterfaceMethodref) {
+				print_jcf_constant(jcf, i, tag);
+			}
+		}
 	}
-
 	return (0);
 }
 
