@@ -49,6 +49,7 @@ READJCF
 
 DESIGN DESCRIPTION
 
+---(Do not write lines of text that exceed the width of this line.)------------
 <Insert a description of your solution in English.  Describe any design
 decisions that you made.  Do not submit pseudo-code.> 
 
