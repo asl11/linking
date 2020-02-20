@@ -381,24 +381,25 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 		case JCF_CONSTANT_NameAndType:
 		case JCF_CONSTANT_InvokeDynamic:;
 			// Read a constant that contains two u2's.
-			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_2u2));
-			if (fread(jcf->constant_pool.pool[i]->body, 
-				sizeof(struct jcf_cp_info_2u2->body), 1, jcf->f) != 1)
+			struct jcf_cp_info_2u2 *temp_2u2 = malloc(sizeof(struct jcf_cp_info_2u2));
+			//(temp_2u2->body) = malloc(sizeof(struct jcf_cp_info_2u2->body));
+			if (fread(&(temp_2u2->body), sizeof(temp_2u2->body), 1, jcf->f) != 1)
 				return (-1);
-			jcf->constant_pool.pool[i]->body->u2_1 = ntohs(jcf->constant_pool.pool[i]->u2_1);
-			jcf->constant_pool.pool[i]->body->u2_2 = ntohs(jcf->constant_pool.pool[i]->u2_2);
-			jcf->constant_pool.pool[i]->tag = tag;
+			temp_2u2->body.u2_1 = ntohs(temp_2u2->body.u2_1);
+			temp_2u2->body.u2_2 = ntohs(temp_2u2->body.u2_2);
+			temp_2u2->tag = tag;
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_2u2;
 			break;
 
 		case JCF_CONSTANT_Integer:
 		case JCF_CONSTANT_Float:;
 			// Read a constant that contains one u4.
-			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u4));
-			if (fread(jcf->constant_pool.pool[i]->u4, 
-				sizeof(struct jcf_cp_info_1u4->u4), 1, jcf->f) != 1)
+			struct jcf_cp_info_1u4 *temp_1u4 = malloc( sizeof(struct jcf_cp_info_1u4));
+			if (fread(&(temp_1u4->u4), sizeof(temp_1u4->u4), 1, jcf->f) != 1)
 				return (-1);
-			jcf->constant_pool.pool[i]->u4 = ntohl(jcf->constant_pool.pool[i]->u4);
-			jcf->constant_pool.pool[i]->tag = tag;
+			temp_1u4->u4 = ntohl(temp_1u4->u4);
+			temp_1u4->tag = tag;
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_1u4;
 			break;
 
 		case JCF_CONSTANT_Long:
@@ -407,14 +408,15 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 			 * Read a constant that contains two u4's and
 			 * occupies two indices in the constant pool. 
 			 */
-			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_2u4));
-			if (fread(jcf->constant_pool.pool[i]->high_bytes, sizeof(uint32_t), 1, jcf->f) != 1)
+			struct jcf_cp_info_2u4 *temp_2u4 = malloc( sizeof(struct jcf_cp_info_2u4));
+			if (fread(&(temp_2u4->high_bytes), sizeof(uint32_t), 1, jcf->f) != 1)
 				return(-1);
-			if (fread(jcf->constant_pool.pool[i]->low_bytes, sizeof(uint32_t), 1, jcf->f) != 1)
+			if (fread(&(temp_2u4->low_bytes), sizeof(uint32_t), 1, jcf->f) != 1)
 				return(-1);
-			jcf->constant_pool.pool[i]->tag = tag;
-			jcf->constant_pool.pool[i]->high_bytes = ntohl(jcf->constant_pool.pool[i]->high_bytes);
-			jcf->constant_pool.pool[i]->low_bytes = ntohl(jcf->constant_pool.pool[i]->low_bytes);
+			temp_2u4->tag = tag;
+			temp_2u4->high_bytes = ntohl(temp_2u4->high_bytes);
+			temp_2u4->low_bytes = ntohl(temp_2u4->low_bytes);
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_2u4;
 			i++;
 			break;
 
@@ -424,23 +426,23 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 			if (fread(&length, sizeof(uint16_t), 1, jcf->f) != 1)
 				return (-1);
 			length = ntohs(length);
-			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_utf8_info) + length);
-			uint8_t[length] array; 
-			if (fread(array, sizeof(uint8_t) * length, 1, jcf->f) != 1)
+			struct jcf_cp_utf8_info *temp_utf8 = malloc( sizeof(struct jcf_cp_utf8_info) + length);
+			int read = fread(&(temp_utf8->bytes), sizeof(uint8_t) * length, 1, jcf->f);
+			if (read != 1 || read != 0)
 				return(-1);
-			jcf->constant_pool.pool[i]->tag = tag;
-			jcf->constant_pool.pool[i]->length = length;
-			jcf->constant_pool.pool[i]->bytes = array;
+			temp_utf8->tag = tag;
+			temp_utf8->length = length;
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_utf8;
 			break;
 
 		case JCF_CONSTANT_MethodHandle:;
 			// Read a constant that contains one u1 and one u2.
-			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u1_1u2));
-			if (fread(jcf->constant_pool.pool[i]->body, 
-				sizeof(struct jcf_cp_info_1u1_1u2->body), 1, jcf->f) != 1)
+			struct jcf_cp_info_1u1_1u2 *temp_1u1_1u2 = malloc( sizeof(struct jcf_cp_info_1u1_1u2));
+			if (fread(&(temp_1u1_1u2->body), sizeof(temp_1u1_1u2->body), 1, jcf->f) != 1)
 				return (-1);
-			jcf->constant_pool.pool[i]->body->u2 = ntohs(jcf->constant_pool.pool[i]->u2);
-			jcf->constant_pool.pool[i]->tag = tag;
+			temp_1u1_1u2->body.u2 = ntohs(temp_1u1_1u2->body.u2);
+			temp_1u1_1u2->tag = tag;
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_1u1_1u2;
 			break;
 
 		default:
