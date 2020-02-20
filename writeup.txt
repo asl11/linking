@@ -108,6 +108,19 @@ SPECIFIC FUNCTIONS OF INTEREST:
 	and double take two indices, we have i++ in the case that the tag
 	is long or double.
 
+	PROCESS BODY/HEADER/INTERFACES/ATTRIBUTES
+	For these functions, since we don't really have to do anything with 
+	the data stored in these areas, we just use fread to make sure that 
+	we read the exact correct number of bytes, such that by the end of the 
+	process we have reached what should be the end of file, and can verify that
+	the jcm file is correctly formatted. For header, we have to verify the
+	magic number, but otherwise we create the associated structs(body or
+	header) and fill in the fields with the data from fread, then move on to 
+	the next section of the jcm. For the attributes, we will read the attribute
+	count, then loop over of the attribute array, reading each of the them
+	by first reading attribute name index, then length, then the data in 
+	the attributes byte array. 
+
 TESTING STRATEGY
 
 We tested the function by compiling a java class file from 215 and 
