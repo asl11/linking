@@ -365,22 +365,21 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 		switch (tag) {
 		case JCF_CONSTANT_String:
 		case JCF_CONSTANT_Class:
-		case JCF_CONSTANT_MethodType:
+		case JCF_CONSTANT_MethodType:;
 			// Read a constant that contains one u2.
-			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u2));
-			jcf->constant_pool.pool[i] = (struct jcf_cp_info_1u2 *) jcf->constant_pool.pool[i];
-			if (fread(jcf->constant_pool.pool[i]->u2, 
-				sizeof(struct jcf_cp_info_1u2->u2), 1, jcf->f) != 1)
+			struct jcf_cp_info_1u2 *temp_1u2 = malloc(sizeof(struct jcf_cp_info_1u2));
+			if (fread(&(temp_1u2->u2), sizeof(temp_1u2->u2), 1, jcf->f) != 1)
 				return (-1);
-			jcf->constant_pool.pool[i]->u2 = ntohs(jcf->constant_pool.pool[i]->u2);
-			jcf->constant_pool.pool[i]->tag = tag;
+			temp_1u2->u2 = ntohs(temp_1u2->u2);
+			temp_1u2->tag = tag;
+			jcf->constant_pool.pool[i] = (struct jcf_cp_info *)temp_1u2;
 			break;
 
 		case JCF_CONSTANT_Fieldref:
 		case JCF_CONSTANT_Methodref:
 		case JCF_CONSTANT_InterfaceMethodref:
 		case JCF_CONSTANT_NameAndType:
-		case JCF_CONSTANT_InvokeDynamic:
+		case JCF_CONSTANT_InvokeDynamic:;
 			// Read a constant that contains two u2's.
 			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_2u2));
 			if (fread(jcf->constant_pool.pool[i]->body, 
@@ -392,7 +391,7 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 			break;
 
 		case JCF_CONSTANT_Integer:
-		case JCF_CONSTANT_Float:
+		case JCF_CONSTANT_Float:;
 			// Read a constant that contains one u4.
 			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u4));
 			if (fread(jcf->constant_pool.pool[i]->u4, 
@@ -403,7 +402,7 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 			break;
 
 		case JCF_CONSTANT_Long:
-		case JCF_CONSTANT_Double:
+		case JCF_CONSTANT_Double:;
 			/* 
 			 * Read a constant that contains two u4's and
 			 * occupies two indices in the constant pool. 
@@ -419,7 +418,7 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 			i++;
 			break;
 
-		case JCF_CONSTANT_Utf8:
+		case JCF_CONSTANT_Utf8:;
 			// Read a UTF8 constant.
 			uint16_t length;
 			if (fread(&length, sizeof(uint16_t), 1, jcf->f) != 1)
@@ -434,7 +433,7 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 			jcf->constant_pool.pool[i]->bytes = array;
 			break;
 
-		case JCF_CONSTANT_MethodHandle:
+		case JCF_CONSTANT_MethodHandle:;
 			// Read a constant that contains one u1 and one u2.
 			jcf->constant_pool.pool[i] = malloc( sizeof(struct jcf_cp_info_1u1_1u2));
 			if (fread(jcf->constant_pool.pool[i]->body, 
