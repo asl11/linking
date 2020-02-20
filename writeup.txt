@@ -1,5 +1,6 @@
 COMP 321 Project 3: Linking
-Alex Li asl11
+Alex Li asl11 
+Chris Lee chl4
 
 ---(Do not write lines of text that exceed the width of this line.)------------
 
@@ -48,14 +49,21 @@ initialized to any other value.
 
 PROBLEM 7.12
 
+To do this problem we followed the steps outlined in the procedure Figure 7.10.
+For a PC-relative reference, since the r.type is R_X86_64_PC32, we go to the 
+if statement on line 6, and implement the equation:
+(ADDR(r.symbol) + r.addend - refaddr); 
+
+where r.addend = -4, refaddr = ADDR(s) + r.offset, and r.offset = 0xa
+ADDR(s) = ADDR(.test) and ADDR(r.symbol) = ADDR(swap)
 A. 
-r.symbol + (-4) - .text - offset = 
+r.symbol + (-4) - ADDR(s) - offset = 
 	0x4004f8 - 4 - 0x4004e0 - 0xa
 	= 4004f4 - 4004e0 - a 
 	= 0xa or 10 in decimal
 
 B.
-r.symbol + addend - .text - offset = 
+r.symbol + addend - ADDR(s) - offset = 
 	0x400500 - 4 - 0x4004d0 - a
 	= 0x4004FC - 4004da
 	= 0x22 or 34 in decimal
@@ -65,12 +73,43 @@ READJCF
 DESIGN DESCRIPTION
 
 ---(Do not write lines of text that exceed the width of this line.)------------
-<Insert a description of your solution in English.  Describe any design
-decisions that you made.  Do not submit pseudo-code.> 
+
+OVERVIEW:
+
+We designed the readjcf program to go down the java class file and read the 
+bytes in the order of appearance, passing along a pointer in the file to 
+seperate parts of our code. For example, the read_header function will 
+read the first amount of bytes associated with a header, 4 bytes for magic, 
+2 bytes for minor version, and 2 bytes for major version. Then, the file 
+pointer, now 8 bytes down the file, will be passed to the next function,
+process_constantpool, and the same procedure will continue. 
+
+SPECIFIC FUNCTIONS OF INTEREST:
+
+	PROCESS JCF CONSTANT
+	For this function, we first read the constant pool count from fread, 
+	then we malloc the seperate structs to store at the indices in the
+	pool, while reading the allocated number of bytes into storage based
+	on the tag. In particular, for the UTF-8 tag case, we have to first read
+	out the length of the byte array that follows, and then malloc the 
+	correct amount of space to be allocated to the byte array stored in 
+	the jcf_cp_utf8
+
+	PRINT JCF CONSTANT
+	For this function, we verify the tag and the index before casting a
+	info pointer into a different pointer type, and then printing out
+	the various fields of the struct with a switch statement in order
+	to seperate around the various tags.
+
+	DESTROY CONSTANT POOL
+	We loop over the entire constant pool, freeing the structs at the 
+	various elements of the constant pool, before finally freeing the 
+	entire constant pool struct. One thing to note is that because long 
+	and double take two indices, we have i++ in the case that the tag
+	is long or double.
 
 TESTING STRATEGY
 
-<Insert a detailed description of your testing strategy: at a minimum
-you should explain how you tested your code, how you selected your inputs,
-what those inputs were, and why you believe those inputs were sufficient
-to test your code.>
+We tested the function by compiling a java class file from 215 and 
+trying to read it while printing steps along the way. 
+
