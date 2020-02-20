@@ -1,12 +1,8 @@
 public class Increment {
-  private int num;
-
-  public Increment(int num) {
-    this.num = num;
-  }
-
-  public int increment(int add) {
-    num += add;
-    return num;
+  public static void main(String[] args) {
+  	long num1 = 5;
+  	double num2 = 15.0;
+  	double sum = num1 + num2;
+  	System.out.println("Sum of 5 and 15 " + sum);
   }
 }

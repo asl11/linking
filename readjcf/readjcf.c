@@ -271,7 +271,8 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
 	case JCF_CONSTANT_Class:
 		// Print the class.
 		info2 = (struct jcf_cp_class_info*) info;
-		print_jcf_constant(jcf, info2->name_index, JCF_CONSTANT_Utf8);
+		if (print_jcf_constant(jcf, info2->name_index, JCF_CONSTANT_Utf8) != 0)
+			return (-1);
 		break;
 	case JCF_CONSTANT_Fieldref:
 	case JCF_CONSTANT_Methodref:
@@ -281,17 +282,23 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
 		 * separated by a '.'.
 		 */
 		info3 = (struct jcf_cp_ref_info*) info;
-		print_jcf_constant(jcf, info3->class_index, JCF_CONSTANT_Class);
+		if (print_jcf_constant(jcf, info3->class_index, JCF_CONSTANT_Class)
+			!= 0)
+			return(-1);
 		printf(".");
-		print_jcf_constant(jcf, info3->name_and_type_index,
-			JCF_CONSTANT_NameAndType);
+		if (print_jcf_constant(jcf, info3->name_and_type_index,
+			JCF_CONSTANT_NameAndType) != 0)
+			return (-1);
 		break;
 	case JCF_CONSTANT_NameAndType:
 		// Print the name and type.
 		info4 = (struct jcf_cp_nameandtype_info*) info;
-		print_jcf_constant(jcf, info4->name_index, JCF_CONSTANT_Utf8);
+		if (print_jcf_constant(jcf, info4->name_index, JCF_CONSTANT_Utf8) != 0)
+			return (-1);
 		printf(" ");
-		print_jcf_constant(jcf, info4->descriptor_index, JCF_CONSTANT_Utf8);
+		if (print_jcf_constant(jcf, info4->descriptor_index, JCF_CONSTANT_Utf8)
+			!= 0)
+			return(-1);
 		break;
 	case JCF_CONSTANT_Utf8:
 		// Print the UTF8.
@@ -375,8 +382,8 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 		return (-1);
 	constant_pool_count = ntohs(constant_pool_count);
 	// Allocate the constant pool.
-	jcf->constant_pool.pool = malloc(constant_pool_count * 
-		sizeof(&constant_pool_count));
+	jcf->constant_pool.pool = Calloc(constant_pool_count * 
+		sizeof(&constant_pool_count), 1);
 	jcf->constant_pool.count = constant_pool_count;
 
 	// Read the constant pool.
@@ -490,10 +497,14 @@ process_jcf_constant_pool(struct jcf_state *jcf)
 	if (jcf->depends_flag) {
 		for (int i = 1; i < constant_pool_count; i++) {
 			tag = jcf->constant_pool.pool[i]->tag;
+			if (tag == JCF_CONSTANT_Double || tag == JCF_CONSTANT_Long) {
+				i ++;
+			}
 			if (tag == JCF_CONSTANT_Methodref || tag == JCF_CONSTANT_Fieldref 
 				|| tag == JCF_CONSTANT_InterfaceMethodref) {
 				printf("Dependency - ");
-				print_jcf_constant(jcf, i, tag);
+				if(print_jcf_constant(jcf, i, tag) != 0)
+					return(-1);
 				printf("\n");
 			}
 		}
@@ -519,6 +530,9 @@ destroy_jcf_constant_pool(struct jcf_constant_pool *pool)
 	
 	// Read the constant pool.
 	for (int i = 1; i < pool->count; i++) {
+		if(pool->pool[i] == NULL)
+			continue;
+
 		// Read the constant pool info tag.
 		tag = pool->pool[i]->tag;
 
