@@ -260,13 +260,21 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
 	(void)expected_tag;
 
 	// Verify the index.
+	if (index <= jcf->constant_pool.count)
+		return -1;
+
+	info = jcf->constant_pool.pool[i];
 
 	// Verify the tag.
+	if (info->tag != expected_tag)
+		return -1;
 
 	// Print the constant.
 	switch (info->tag) {
 	case JCF_CONSTANT_Class:
 		// Print the class.
+		info = (jcf_cp_class_info*) info;
+		printf("%u \n", info->name_index); 
 		break;
 	case JCF_CONSTANT_Fieldref:
 	case JCF_CONSTANT_Methodref:
@@ -275,12 +283,21 @@ print_jcf_constant(struct jcf_state *jcf, uint16_t index,
 		 * Print the reference, with the Class and NameAndType
 		 * separated by a '.'.
 		 */
+		info = (jcf_cp_ref_info*) info;
+		printf("%u.%u \n", info->class_index, info->name_and_type_index);
 		break;
 	case JCF_CONSTANT_NameAndType:
 		// Print the name and type.
+		info = (jcf_cp_nameandtype_info*) info;
+		printf("%u, %u \n", info->name_index, info->descriptor_index);
 		break;
 	case JCF_CONSTANT_Utf8:
 		// Print the UTF8.
+		info = (jcf_cp_utf8_info*) info;
+		for (int i = 0; i < info->length; i++) {
+			printf("%u\0 ", info->bytes[i]);
+		}
+		prinft("\n");
 		break;
 	default:
 		// Ignore all other constants.
