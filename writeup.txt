@@ -123,6 +123,36 @@ SPECIFIC FUNCTIONS OF INTEREST:
 
 TESTING STRATEGY
 
-We tested the function by compiling a java class file from 215 and 
-trying to read it while printing steps along the way. 
+We tested the function by compiling a java class file from another COMP course
+that we are in that teaches Java, COMP 322. For any given .class files and all
+the given tests, we would not only try all combinations of flags but we would
+run it using our readjcf file, making sure to compile it using make if we made
+any changes, and then we would put this output into a a file (e.g. output).
+Then, we would run the same .class file using the given readjcf_ref that was
+given to us and then put that output into a different file (e.g. output2). Then
+we would use the diff command on the two files to confirm that they had the
+exact same output.
+
+First we started by confirming that our code was able to read a basic .class
+file, so we wrote a simple one that had all the potential different parts that
+we have to check for, such as all the different possible constants in constant
+pool, and made sure our program initially was able to handle this. We did this
+by simply writing a java class that had instance variables of all the different
+types (e.g. int, long, double, String, etc.).
+
+Then, we tried breaking our code, using the hexedit command on the class files
+to try and break certain aspects of our code. We broke the class such as by
+changing the magic number from 0xCAFEBEBE, changing the minor and major
+version bytes, etc. and made sure that our program would run into the same
+errors that the reference program would.
+
+From there we moved onto more complex java class files as mentioned at the
+beginning. We got java class files from classes we are in such as COMP 322 and
+COMP 215 and made sure that our program would be able to read through and not
+throw any errors on large, complex .class files. For these we also proceeded to
+break certain bits as before and making sure that our program and the reference
+program both broke in the same areas.
+
+My chosen test cases are sufficient because with every test we would try and
+reach a new part of our code. For example, 
 
